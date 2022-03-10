@@ -1,0 +1,43 @@
+SELECT 
+	t.table_name as "表名称",
+	col.ordinal_position as "字段顺序",
+	col.column_name as "字段名称",
+	col.data_type as "字段类型",
+	col.character_maximum_length as "字段长度",
+	CASE 
+		WHEN col.numeric_precision is not null then (col.numeric_precision || ',' || col.numeric_scale)
+		ELSE ''
+	END as "字段精度",
+	col.is_nullable as "是否可为空",
+	COALESCE(col.column_default, '') as "默认值",
+	des.description as "字段描述",
+	d.description as "表注释"
+FROM
+(
+	select 
+		COALESCE(n.tablename, t.relname) as table_name
+	from 
+		pg_class t 
+	join
+		pg_namespace m on t.relnamespace = m.oid
+	left join
+		pg_partitions n on t.relname = n.partitiontablename
+	where 
+		m.nspname = 'public' 
+	and 
+		t.relkind = 'r'
+	GROUP BY
+		table_name
+) t
+JOIN
+	information_schema.columns col on col.table_name = t.table_name
+LEFT JOIN 
+	pg_description des ON col.table_name::regclass = des.objoid AND col.ordinal_position = des.objsubid
+JOIN
+	information_schema.tables tb on tb."table_name" = t.table_name
+JOIN 
+	pg_class c ON c.relname = tb.table_name
+LEFT JOIN 
+	pg_description d ON d.objoid = c.oid AND d.objsubid = '0'
+ORDER BY
+	t.table_name, col.ordinal_position;

@@ -1,0 +1,210 @@
+{
+	"info": {
+		"_postman_id": "5c8c4e29-2e4a-41c4-9d36-3b9a9156a9f2",
+		"name": "Accumulation Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Excel转图片",
+			"item": [
+				{
+					"name": "Excel转图片测试",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8010/excelToPicture/uploadExcel",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8010",
+							"path": [
+								"excelToPicture",
+								"uploadExcel"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "统计Java工程行数",
+			"item": [
+				{
+					"name": "统计行数",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8010/countJavaProjectLines/count?filePath=",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8010",
+							"path": [
+								"countJavaProjectLines",
+								"count"
+							],
+							"query": [
+								{
+									"key": "filePath",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "导出表结构到Excel",
+			"item": [
+				{
+					"name": "导出Oracle表结构",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "driver",
+									"value": "oracle.jdbc.OracleDriver",
+									"type": "text"
+								},
+								{
+									"key": "url",
+									"value": "jdbc:oracle:thin:@ip:port:orcl",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "username",
+									"type": "text"
+								},
+								{
+									"key": "pwd",
+									"value": "pwd",
+									"type": "text"
+								},
+								{
+									"key": "sqlFile",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "otherCol",
+									"value": "字段名,字段注释,数据类型,必填,主键",
+									"type": "text"
+								},
+								{
+									"key": "tableNameCol",
+									"value": "表名",
+									"type": "text"
+								},
+								{
+									"key": "tableCommentsCol",
+									"value": "表注释",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8010/exportTableStructureToExcel/export",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8010",
+							"path": [
+								"exportTableStructureToExcel",
+								"export"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "导出Postgresql表结构",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "driver",
+									"value": "org.postgresql.Driver",
+									"type": "text"
+								},
+								{
+									"key": "url",
+									"value": "jdbc:postgresql://ip:port/database",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "username",
+									"type": "text"
+								},
+								{
+									"key": "pwd",
+									"value": "pwd",
+									"type": "text"
+								},
+								{
+									"key": "sqlFile",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "otherCol",
+									"value": "字段名称,字段描述,字段类型,字段长度,字段精度,是否可为空,默认值",
+									"type": "text"
+								},
+								{
+									"key": "tableNameCol",
+									"value": "表名称",
+									"type": "text"
+								},
+								{
+									"key": "tableCommentsCol",
+									"value": "表注释",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8010/exportTableStructureToExcel/export",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8010",
+							"path": [
+								"exportTableStructureToExcel",
+								"export"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

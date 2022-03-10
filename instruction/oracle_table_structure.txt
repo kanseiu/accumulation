@@ -1,0 +1,43 @@
+SELECT DISTINCT
+	(a.TABLE_NAME) AS "表名",
+	c.COMMENTS as "表注释",
+	a.COLUMN_NAME AS "字段名",
+	b.COMMENTS AS "字段注释",
+	a.DATA_TYPE || '(' || a.DATA_LENGTH || ')' AS "数据类型",
+	decode(
+		a.NULLABLE,
+		'Y',
+		'N',
+		'N',
+		'Y',
+		'N' 
+	) AS "必填",
+---查询主键
+CASE
+		WHEN a.COLUMN_NAME IN (
+		SELECT
+			col.column_name 
+		FROM
+			user_constraints con,
+			user_cons_columns col 
+		WHERE
+			con.constraint_name = col.constraint_name 
+			AND con.CONSTRAINT_TYPE = 'P' 
+			AND col.table_name = a.TABLE_NAME 
+			) THEN
+			'Y' ELSE 'N' 
+		END "主键" 
+FROM
+	ALL_TAB_COLUMNS a,
+	ALL_COL_COMMENTS b,
+	dba_tab_comments c
+WHERE
+	a.OWNER = b.OWNER 
+	AND a.OWNER = c.OWNER
+	AND a.TABLE_NAME = b.TABLE_NAME 
+	AND a.TABLE_NAME = c.TABLE_NAME
+	AND a.COLUMN_NAME = b.COLUMN_NAME 
+	AND a.OWNER = 'xxxx'
+ORDER BY
+	c.COMMENTS nulls last,
+	a.TABLE_NAME
