@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: accumulation
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+logback:
+  loghome: logs
