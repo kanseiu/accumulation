@@ -1,17 +1,20 @@
 package com.kanseiu.accumulation.service.impl;
 
 import com.kanseiu.accumulation.api.result.ActionResult;
+import com.kanseiu.accumulation.exception.BusinessException;
 import com.kanseiu.accumulation.service.ExcelToPictureService;
 import com.spire.xls.Workbook;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @Description:
@@ -22,17 +25,19 @@ import java.io.*;
 @Slf4j
 public class ExcelToPictureServiceImpl implements ExcelToPictureService {
 
-    private final static int DPI_X = 300;
+    private static final int DPI_X = 300;
 
-    private final static int DPI_Y = 300;
+    private static final int DPI_Y = 300;
 
-    private final static int SLOT = 3;
+    private static final int SLOT = 3;
 
-    private final static int FIRST_SHEET_INDEX = 0;
+    private static final int FIRST_SHEET_INDEX = 0;
 
     @Override
     public ActionResult handler(MultipartFile file) throws Exception{
         String fileContentType = file.getContentType();
+        if(!StringUtils.hasText(fileContentType))
+            throw new BusinessException("文件类型为空！无法解析！");
         switch (fileContentType) {
             case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 this.excelToPicture(file, XSSFWorkbook.class);
@@ -71,9 +76,9 @@ public class ExcelToPictureServiceImpl implements ExcelToPictureService {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         wb.write(bos);
         InputStream in = new ByteArrayInputStream(bos.toByteArray());
-        Workbook wb_spire = new Workbook();
-        wb_spire.loadFromStream(in);
-        this.processExcelFileToPic(wb_spire, handleTimes);
+        Workbook wbSpire = new Workbook();
+        wbSpire.loadFromStream(in);
+        this.processExcelFileToPic(wbSpire, handleTimes);
         in.close();
         bos.close();
     }

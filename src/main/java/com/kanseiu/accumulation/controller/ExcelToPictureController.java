@@ -31,7 +31,7 @@ public class ExcelToPictureController {
      * @throws IOException
      */
     @PostMapping("uploadExcel")
-    public QueryResult<?> upload(@RequestParam("file") MultipartFile file) throws Exception{
+    public QueryResult<String> upload(@RequestParam("file") MultipartFile file) throws Exception{
         ActionResult uploadResult = excelToPictureService.handler(file);
         return QueryResult.ok(uploadResult.getMessage());
     }

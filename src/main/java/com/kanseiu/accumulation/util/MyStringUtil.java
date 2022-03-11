@@ -1,10 +1,15 @@
 package com.kanseiu.accumulation.util;
 
-public class StringUtil {
+public class MyStringUtil {
+
+    private MyStringUtil(){
+        throw new IllegalStateException();
+    }
+
     /**
      * 默认空字符串
      */
-    public static final String Empty = "";
+    public static final String EMPTY = "";
 
     /**
      * 判断是否null或者空字符串
@@ -12,6 +17,6 @@ public class StringUtil {
      * @return
      */
     public static boolean isNullOrEmpty(String srcStr) {
-        return srcStr == null || srcStr.length() <= 0;
+        return srcStr == null || srcStr.trim().length() <= 0;
     }
 }

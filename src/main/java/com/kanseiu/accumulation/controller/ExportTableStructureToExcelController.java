@@ -43,12 +43,11 @@ public class ExportTableStructureToExcelController {
 
     private static Map<String, DataSource> dataSourceMap = new ConcurrentHashMap<>();
 
-    private final static int STANDARD_COL_WIDTH = 12 * 256;
+    private static final int STANDARD_COL_WIDTH = 12 * 256;
 
-    private final static int MAX_COL_WIDTH = 50 * 256;
+    private static final int MAX_COL_WIDTH = 50 * 256;
 
     /**
-     *
      * @param driver           数据库driver
      * @param url              数据库连接
      * @param username         数据库用户名（根据SQL的不同，可能需要DBA角色的用户）
@@ -62,15 +61,15 @@ public class ExportTableStructureToExcelController {
      * @throws Exception
      */
     @PostMapping("export")
-    public QueryResult<?> upload(@RequestParam("driver") String driver,
-                                 @RequestParam("url") String url,
-                                 @RequestParam("username") String username,
-                                 @RequestParam("pwd") String pwd,
-                                 @RequestParam("sqlFile") MultipartFile sqlFile,
-                                 @RequestParam("otherCol") String otherCol,
-                                 @RequestParam("tableNameCol") String tableNameCol,
-                                 @RequestParam("tableCommentsCol") String tableCommentsCol,
-                                 HttpServletResponse response) throws Exception {
+    public QueryResult<String> upload(@RequestParam("driver") String driver,
+                                      @RequestParam("url") String url,
+                                      @RequestParam("username") String username,
+                                      @RequestParam("pwd") String pwd,
+                                      @RequestParam("sqlFile") MultipartFile sqlFile,
+                                      @RequestParam("otherCol") String otherCol,
+                                      @RequestParam("tableNameCol") String tableNameCol,
+                                      @RequestParam("tableCommentsCol") String tableCommentsCol,
+                                      HttpServletResponse response) throws Exception {
 
         log.info("开始解析Excel文件...");
         String sql = this.readFile(sqlFile);
@@ -96,7 +95,7 @@ public class ExportTableStructureToExcelController {
             map.put(tableCommentsCol, resultSet.getString(tableCommentsCol));
             map.put(tableNameCol, resultSet.getString(tableNameCol));
 
-            if(all.containsKey(resultSet.getString(tableNameCol))){
+            if (all.containsKey(resultSet.getString(tableNameCol))) {
                 all.get(resultSet.getString(tableNameCol)).add(map);
             } else {
                 List<Map<String, String>> list = new ArrayList<>();
@@ -105,12 +104,12 @@ public class ExportTableStructureToExcelController {
             }
         });
         stopWatch.stop();
-        log.info("数据库表结构获取完成，当前共获取表{}个，耗时{}秒", all.keySet().size(), (int)stopWatch.getTotalTimeSeconds());
+        log.info("数据库表结构获取完成，当前共获取表{}个，耗时{}秒", all.keySet().size(), (int) stopWatch.getTotalTimeSeconds());
         this.generateExcel(all, col, tableNameCol, response);
         return QueryResult.ok("导出Excel成功！");
     }
 
-    private String readFile(MultipartFile file) throws Exception {
+    private String readFile(MultipartFile file) {
         try {
             ByteArrayInputStream certBis = new ByteArrayInputStream(file.getBytes());
             InputStreamReader input = new InputStreamReader(certBis);
@@ -124,84 +123,86 @@ public class ExportTableStructureToExcelController {
             input.close();
             bf.close();
             return sb.toString();
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new BusinessException("sql文件读取失败！请检查并修改后重试！");
         }
     }
 
-    private void generateExcel(Map<String, List<Map<String, String>>> map, String[] col, String tableCommentsCol, HttpServletResponse response) throws Exception {
+    private void generateExcel(Map<String, List<Map<String, String>>> map, String[] col, String tableCommentsCol, HttpServletResponse response) {
         log.info("开始生成Excel...");
         if (map.isEmpty())
             throw new BusinessException("查询不到任何数据！请检查sql文件后重试");
 
-        XSSFWorkbook xssfWorkbook = new XSSFWorkbook();
-        XSSFSheet xssfSheet = xssfWorkbook.createSheet();
-        int rowNum1 = 0;
+        try (
+                XSSFWorkbook xssfWorkbook = new XSSFWorkbook();
+        ) {
 
-        // 垂直居中 + 边框 + 字体
-        XSSFCellStyle cellBorderBasicStyle = this.cellBoardThin(xssfWorkbook.createCellStyle());
-        XSSFCellStyle verticalAndHorizontalAlignmentStyle = this.verticalAndHorizontalAlignment(cellBorderBasicStyle);
-        XSSFCellStyle style1 = this.cellContentType(xssfWorkbook.createFont(), verticalAndHorizontalAlignmentStyle);
+            XSSFSheet xssfSheet = xssfWorkbook.createSheet();
+            int rowNum1 = 0;
 
-        // 边框 + 字体
-        XSSFCellStyle cellBorderBasicStyle1 = this.cellBoardThin(xssfWorkbook.createCellStyle());
-        XSSFCellStyle style2 = this.cellContentType(xssfWorkbook.createFont(), cellBorderBasicStyle1);
-        style2.setVerticalAlignment(VerticalAlignment.CENTER);
+            // 垂直居中 + 边框 + 字体
+            XSSFCellStyle cellBorderBasicStyle = this.cellBoardThin(xssfWorkbook.createCellStyle());
+            XSSFCellStyle verticalAndHorizontalAlignmentStyle = this.verticalAndHorizontalAlignment(cellBorderBasicStyle);
+            XSSFCellStyle style1 = this.cellContentType(xssfWorkbook.createFont(), verticalAndHorizontalAlignmentStyle);
 
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        for (Map.Entry<String, List<Map<String, String>>> stringListEntry : map.entrySet()) {
-            String tableName = stringListEntry.getKey();
-            String tableComments = stringListEntry.getValue().get(0).get(tableCommentsCol);
+            // 边框 + 字体
+            XSSFCellStyle cellBorderBasicStyle1 = this.cellBoardThin(xssfWorkbook.createCellStyle());
+            XSSFCellStyle style2 = this.cellContentType(xssfWorkbook.createFont(), cellBorderBasicStyle1);
+            style2.setVerticalAlignment(VerticalAlignment.CENTER);
 
-            // 设置表名
-            XSSFCell xssfCell;
-            String cellValue = StringUtils.hasText(tableComments) ? tableName + "(" + tableComments + ")" : tableName;
-            XSSFRow xssfRow = xssfSheet.createRow(rowNum1);
-            for (int i = 0; i < col.length; i++) {
-                xssfCell = xssfRow.createCell(i);
-                xssfCell.setCellValue(cellValue);
-                xssfCell.setCellStyle(style1);
-            }
-            this.setMerged(xssfSheet, rowNum1, rowNum1, 0, col.length - 1);
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
+            for (Map.Entry<String, List<Map<String, String>>> stringListEntry : map.entrySet()) {
+                String tableName = stringListEntry.getKey();
+                String tableComments = stringListEntry.getValue().get(0).get(tableCommentsCol);
 
-            // 设置字段名
-            xssfRow = xssfSheet.createRow(++rowNum1);
-            for (int i = 0; i < col.length; i++) {
-                xssfCell = xssfRow.createCell(i);
-                xssfCell.setCellValue(col[i]);
-                xssfCell.setCellStyle(style2);
-            }
+                // 设置表名
+                XSSFCell xssfCell;
+                String cellValue = StringUtils.hasText(tableComments) ? tableName + "(" + tableComments + ")" : tableName;
+                XSSFRow xssfRow = xssfSheet.createRow(rowNum1);
+                for (int i = 0; i < col.length; i++) {
+                    xssfCell = xssfRow.createCell(i);
+                    xssfCell.setCellValue(cellValue);
+                    xssfCell.setCellStyle(style1);
+                }
+                this.setMerged(xssfSheet, rowNum1, rowNum1, 0, col.length - 1);
 
-            // 设置值
-            for (int i = 0; i < stringListEntry.getValue().size(); i++) {
-                Map<String, String> tableStructure = stringListEntry.getValue().get(i);
+                // 设置字段名
                 xssfRow = xssfSheet.createRow(++rowNum1);
-                for (int j = 0; j < col.length; j++) {
-                    xssfCell = xssfRow.createCell(j);
-                    xssfCell.setCellValue(tableStructure.get(col[j]));
+                for (int i = 0; i < col.length; i++) {
+                    xssfCell = xssfRow.createCell(i);
+                    xssfCell.setCellValue(col[i]);
                     xssfCell.setCellStyle(style2);
                 }
+
+                // 设置值
+                for (int i = 0; i < stringListEntry.getValue().size(); i++) {
+                    Map<String, String> tableStructure = stringListEntry.getValue().get(i);
+                    xssfRow = xssfSheet.createRow(++rowNum1);
+                    for (int j = 0; j < col.length; j++) {
+                        xssfCell = xssfRow.createCell(j);
+                        xssfCell.setCellValue(tableStructure.get(col[j]));
+                        xssfCell.setCellStyle(style2);
+                    }
+                }
+                // 加入空行
+                xssfSheet.createRow(++rowNum1);
+                this.setMerged(xssfSheet, rowNum1, rowNum1, 0, col.length - 1);
+                rowNum1++;
             }
-            // 加入空行
-            xssfSheet.createRow(++rowNum1);
-            this.setMerged(xssfSheet, rowNum1, rowNum1, 0, col.length - 1);
-            rowNum1++;
-        }
 
-        // 设置单元格宽度
-        for(int i = 0; i < col.length; i++){
-            xssfSheet.autoSizeColumn(i);
-            int width = Math.max(STANDARD_COL_WIDTH, Math.min(MAX_COL_WIDTH, xssfSheet.getColumnWidth(i)));
-            xssfSheet.setColumnWidth(i, width);
-        }
+            // 设置单元格宽度
+            for (int i = 0; i < col.length; i++) {
+                xssfSheet.autoSizeColumn(i);
+                int width = Math.max(STANDARD_COL_WIDTH, Math.min(MAX_COL_WIDTH, xssfSheet.getColumnWidth(i)));
+                xssfSheet.setColumnWidth(i, width);
+            }
 
-        stopWatch.stop();
+            stopWatch.stop();
 
-        log.info("表结构生成Excel完成，耗时{}秒", (int)stopWatch.getTotalTimeSeconds());
+            log.info("表结构生成Excel完成，耗时{}秒", (int) stopWatch.getTotalTimeSeconds());
 
-        //用输出流写到excel
-        try {
+            //用输出流写到excel
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             response.setHeader("Pragma", "no-cache");
             response.setHeader("Expires", "0");
@@ -213,8 +214,9 @@ public class ExportTableStructureToExcelController {
             xssfWorkbook.write(outputStream);
             outputStream.flush();
             outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new BusinessException("生成Excel出错！" + e.getMessage());
         }
     }
 
@@ -226,7 +228,7 @@ public class ExportTableStructureToExcelController {
     }
 
     // 字体
-    private XSSFCellStyle cellContentType(XSSFFont font, XSSFCellStyle cellStyle){
+    private XSSFCellStyle cellContentType(XSSFFont font, XSSFCellStyle cellStyle) {
         font.setFontHeightInPoints((short) 12);// 字号
         cellStyle.setFont(font);
         cellStyle.setWrapText(true);
@@ -248,7 +250,7 @@ public class ExportTableStructureToExcelController {
         xssfSheet.addMergedRegion(cra);
     }
 
-    private DataSource getDataSource(String driver, String url, String username, String pwd) throws Exception {
+    private DataSource getDataSource(String driver, String url, String username, String pwd) {
         String key = driver.concat(";").concat(url).concat(";").concat(username).concat(";").concat(pwd);
         if (dataSourceMap.containsKey(key)) {
             return dataSourceMap.get(key);
@@ -262,17 +264,16 @@ public class ExportTableStructureToExcelController {
                     .username(username)
                     .password(pwd)
                     .build();
-            Connection connection = null;
-            try {
-                connection = dataSource.getConnection();
+
+            try (
+                    Connection connection = dataSource.getConnection();
+            ) {
                 connection.beginRequest();
                 dataSourceMap.put(key, dataSource);
                 return dataSource;
             } catch (Exception e) {
                 if (!dataSource.isClosed()) dataSource.close();
-                throw new Exception("测试连接失败！" + e.getMessage());
-            } finally {
-                if (!Objects.isNull(connection) && !connection.isClosed()) connection.close();
+                throw new BusinessException("测试连接失败！" + e.getMessage());
             }
         }
     }

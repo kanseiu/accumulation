@@ -15,7 +15,7 @@ public class ActionResult {
     /** 结果具体信息 */
     private String message;
 
-    public static ActionResult CreateActionResult(boolean succeed, int code, String message){
+    public static ActionResult createActionResult(boolean succeed, int code, String message){
         ActionResult result = new ActionResult();
         result.setSuccess(succeed);
         result.setCode(code);
@@ -24,14 +24,14 @@ public class ActionResult {
     }
 
     public static ActionResult ok(){
-        return CreateActionResult(true, ResultCodes.SUCCESS, ResultCodes.SuccessFlag);
+        return createActionResult(true, ResultCodes.SUCCESS, ResultCodes.SUCCESS_FLAG);
     }
 
     public static ActionResult fail(String msg){
-        return CreateActionResult(false, ResultCodes.FAIL, msg);
+        return createActionResult(false, ResultCodes.FAIL, msg);
     }
 
     public static ActionResult exception(Exception e) {
-        return CreateActionResult(false, ResultCodes.FAIL, String.format("%s:%s", ResultCodes.FailFlag, e.getMessage()));
+        return createActionResult(false, ResultCodes.FAIL, String.format("%s:%s", ResultCodes.FAIL_FLAG, e.getMessage()));
     }
 }

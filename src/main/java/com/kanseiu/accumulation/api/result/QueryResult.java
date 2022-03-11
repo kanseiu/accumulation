@@ -8,8 +8,8 @@ public class QueryResult<T> extends ActionResult {
     /** 结果数据 */
     private T data;
 
-    public static <TData> QueryResult<TData> CreateQueryResult(boolean succeed, TData data, int code, String message){
-        QueryResult<TData> result = new QueryResult<>();
+    public static <T> QueryResult<T> createQueryResult(boolean succeed, T data, int code, String message){
+        QueryResult<T> result = new QueryResult<>();
         result.setSuccess(succeed);
         result.setData(data);
         result.setCode(code);
@@ -17,15 +17,15 @@ public class QueryResult<T> extends ActionResult {
         return result;
     }
 
-    public static <TData> QueryResult<TData> fail(TData data, String msg){
-        return CreateQueryResult(false, data, ResultCodes.FAIL, msg);
+    public static <T> QueryResult<T> fail(T data, String msg){
+        return createQueryResult(false, data, ResultCodes.FAIL, msg);
     }
 
-    public static <TData> QueryResult<TData> ok(TData data){
-        return CreateQueryResult(true, data, ResultCodes.SUCCESS, ResultCodes.SuccessFlag);
+    public static <T> QueryResult<T> ok(T data){
+        return createQueryResult(true, data, ResultCodes.SUCCESS, ResultCodes.SUCCESS_FLAG);
     }
 
-    public static <TData> QueryResult<TData> ok(TData data, String msg){
-        return CreateQueryResult(true, data, ResultCodes.SUCCESS, msg);
+    public static <T> QueryResult<T> ok(T data, String msg){
+        return createQueryResult(true, data, ResultCodes.SUCCESS, msg);
     }
 }
