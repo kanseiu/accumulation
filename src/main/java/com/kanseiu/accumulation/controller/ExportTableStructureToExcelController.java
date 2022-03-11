@@ -11,6 +11,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,13 +48,18 @@ public class ExportTableStructureToExcelController {
     private final static int MAX_COL_WIDTH = 50 * 256;
 
     /**
-     * 导出
      *
-     * @param driver   数据库driver
-     * @param url      数据库IP
-     * @param username 用户名
-     * @param pwd      密码
+     * @param driver           数据库driver
+     * @param url              数据库连接
+     * @param username         数据库用户名（根据SQL的不同，可能需要DBA角色的用户）
+     * @param pwd              数据库密码
+     * @param sqlFile          查询表结构的sql语句
+     * @param otherCol         除了 表名 和 表注释之外的字段名称（和查询字段一一对应，可无顺序）
+     * @param tableNameCol     表名字段（和查询字段一一对应）
+     * @param tableCommentsCol 表注释字段（和查询字段一一对应）
+     * @param response
      * @return
+     * @throws Exception
      */
     @PostMapping("export")
     public QueryResult<?> upload(@RequestParam("driver") String driver,
@@ -66,17 +72,22 @@ public class ExportTableStructureToExcelController {
                                  @RequestParam("tableCommentsCol") String tableCommentsCol,
                                  HttpServletResponse response) throws Exception {
 
+        log.info("开始解析Excel文件...");
         String sql = this.readFile(sqlFile);
 
         String[] col = otherCol.split(",");
 
-        //创建数据源连接池
+        log.info("开始创建连接...");
+        //创建连接
         DataSource dataSource = this.getDataSource(driver, url, username, pwd);
 
         //创建jdbc模板
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(dataSource);
 
+        log.info("开始获取数据库表结构...");
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         Map<String, List<Map<String, String>>> all = new HashMap<>();
         jdbcTemplate.query(sql, resultSet -> {
             Map<String, String> map = new HashMap<>();
@@ -93,6 +104,8 @@ public class ExportTableStructureToExcelController {
                 list.add(map);
             }
         });
+        stopWatch.stop();
+        log.info("数据库表结构获取完成，当前共获取表{}个，耗时{}秒", all.keySet().size(), (int)stopWatch.getTotalTimeSeconds());
         this.generateExcel(all, col, tableNameCol, response);
         return QueryResult.ok("导出Excel成功！");
     }
@@ -117,6 +130,7 @@ public class ExportTableStructureToExcelController {
     }
 
     private void generateExcel(Map<String, List<Map<String, String>>> map, String[] col, String tableCommentsCol, HttpServletResponse response) throws Exception {
+        log.info("开始生成Excel...");
         if (map.isEmpty())
             throw new BusinessException("查询不到任何数据！请检查sql文件后重试");
 
@@ -134,6 +148,8 @@ public class ExportTableStructureToExcelController {
         XSSFCellStyle style2 = this.cellContentType(xssfWorkbook.createFont(), cellBorderBasicStyle1);
         style2.setVerticalAlignment(VerticalAlignment.CENTER);
 
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         for (Map.Entry<String, List<Map<String, String>>> stringListEntry : map.entrySet()) {
             String tableName = stringListEntry.getKey();
             String tableComments = stringListEntry.getValue().get(0).get(tableCommentsCol);
@@ -179,6 +195,10 @@ public class ExportTableStructureToExcelController {
             int width = Math.max(STANDARD_COL_WIDTH, Math.min(MAX_COL_WIDTH, xssfSheet.getColumnWidth(i)));
             xssfSheet.setColumnWidth(i, width);
         }
+
+        stopWatch.stop();
+
+        log.info("表结构生成Excel完成，耗时{}秒", (int)stopWatch.getTotalTimeSeconds());
 
         //用输出流写到excel
         try {
