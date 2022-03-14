@@ -4,11 +4,10 @@ import com.kanseiu.accumulation.api.result.QueryResult;
 import com.kanseiu.accumulation.exception.BusinessException;
 import com.kanseiu.accumulation.model.CountJavaProjectLines;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,25 +60,19 @@ public class CountJavaProjectLinesController {
     }
 
     private static void countLineNums(File f1, CountJavaProjectLines countJavaProjectLines) {
-        //创建当前文件的对象
-        File file = new File(f1.getAbsolutePath());
-        //创建字符流
         try (
-                FileReader fr = new FileReader(file);
+                FileInputStream fis = new FileInputStream(f1);
+                InputStreamReader isr = new InputStreamReader(fis);
+                BufferedReader br = new BufferedReader(isr);
         ) {
-            int i, charIndex = 0, ascIILf = 10;
-            while ((i = fr.read()) != -1) {
-                if(i == ascIILf){
-                    if(charIndex > 1)
-                        countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + 1);
-                    charIndex = 0;
-                } else
-                    charIndex++;
+            int count = 0;
+            String a;
+            while ((a = br.readLine()) != null){
+                if(StringUtils.hasText(a)) count++;
             }
-            if(charIndex > 0)
-                countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + 1);
+            countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + count);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            throw new BusinessException(e.getMessage());
         }
     }
 }
