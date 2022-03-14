@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 /**
  * @Description: 统计Java工程代码行数
+ * 只有/src/main下的.java和.xml文件会被统计（行数统计中会包含注释，但不包括空行）
  * @Author: kanseiu
  * @Date: 2022-03-07 10:57
  **/
@@ -39,7 +40,7 @@ public class CountJavaProjectLinesController {
         } catch (IOException e) {
             throw new BusinessException(e.getMessage());
         }
-        log.info("扫描完毕");
+        log.info("扫描完毕！行数为：" + countJavaProjectLines.getLineNums() + "，文件数为：" + countJavaProjectLines.getFileNums());
         return QueryResult.ok("行数为：" + countJavaProjectLines.getLineNums() + "，文件数为：" + countJavaProjectLines.getFileNums());
     }
 
@@ -54,7 +55,6 @@ public class CountJavaProjectLinesController {
                 if (Pattern.matches(SRC_MAIN_FILE_PATTERN, path)) {
                     countJavaProjectLines.setFileNums(countJavaProjectLines.getFileNums() + 1);
                     countLineNums(f1, countJavaProjectLines);
-                    log.info("file = {}, lineNum = {}, fileNum = {}", path, countJavaProjectLines.getLineNums(), countJavaProjectLines.getFileNums());
                 }
             }
         }
@@ -67,13 +67,17 @@ public class CountJavaProjectLinesController {
         try (
                 FileReader fr = new FileReader(file);
         ) {
-            int i;
+            int i, charIndex = 0, ascIILf = 10;
             while ((i = fr.read()) != -1) {
-                Character c = (char) i;
-                //判断字符串中有没有换行
-                if (c.toString().contains("\n"))
-                    countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + 1);
+                if(i == ascIILf){
+                    if(charIndex > 1)
+                        countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + 1);
+                    charIndex = 0;
+                } else
+                    charIndex++;
             }
+            if(charIndex > 0)
+                countJavaProjectLines.setLineNums(countJavaProjectLines.getLineNums() + 1);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
